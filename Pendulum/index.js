@@ -46,16 +46,15 @@ function drawPendulum (context, origin, destination, mass) {
 }
 
 function drawHistory(context, history) {
-    let force = 444;
 
     history.forEach((val, i) => {
-       if (i) {
+       if (i !== 0) {
            context.drawLine({
-               strokeStyle: '#' + toString(force),
+               strokeStyle: `#333`,
                strokeWidth: '3',
                x1: history[i-1].x, y1: history[i-1].y,
-               x2: history[1].x,   y2: history[i].y
-           })
+               x2: history[i].x,   y2: history[i].y
+           });
        }
     });
 }
@@ -67,23 +66,20 @@ $(document).ready(() => {
     const width     = ctx.width();
     const height    = ctx.height();
     const origin    = new Point(width/2, height/8);
-    let history     = [];
-    const histSize  = 100;
+    const history   = [];
+    const histSize  = 500;
 
-    const g         = 1;
-    const mass      = [50, 50];
-    const damping   = 0.015;
+    const g         = 1.1;
+    const mass      = [50, 75];
 
-    const theta     = [PI/2, PI/2];
-    const radius    = [100, 100];
-    const velocity  = [0, 0];
-    const accel     = [0, 0];
+    let theta       = [PI/2, PI/2];
+    let radius      = [100, 200];
+    let velocity    = [0, 0];
+    let accel       = [0, 0];
 
     const points    = [toRect(radius[0], theta[0]), toRect(radius[1], theta[1])];
     points[0] = translate(origin, points[0]);
     points[1] = translate(points[0], points[1]);
-
-    history   = Array(histSize).fill(points[1]);
 
     function loop() {
         ctx.drawRect({
@@ -124,19 +120,18 @@ $(document).ready(() => {
             console.log(accel);
         }
 
-        velocity[0] += accel[0];
-        theta[0]    += velocity[0];
-        points[0]   = translate(origin, toRect(radius[0], theta[0]));
+        velocity = velocity.map((v, i) => v + accel[i]);
+        theta    = theta.map((t, i) => t + velocity[i]);
 
-        velocity[1] += accel[1];
-        theta[1]    += velocity[1];
-        points[1]   = translate(points[0], toRect(radius[1], theta[1]));
+        points[0] = translate(origin, toRect(radius[0], theta[0]));
+        points[1] = translate(points[0], toRect(radius[1], theta[1]));
 
-        history.shift();
         history.push(points[1]);
+        if (history.length > histSize)
+            history.shift();
 
         if (running)
-            setTimeout(loop, 40);
+            setTimeout(loop, 15);
     }
 
     loop();
